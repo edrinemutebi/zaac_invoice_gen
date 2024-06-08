@@ -72,7 +72,8 @@
         document.addEventListener('DOMContentLoaded', loadPDF);
 
         async function loadPDF() {
-            const response = await fetch('invoice.pdf');
+            //const response = await fetch('invoice.pdf');
+            const response = await fetch('https://zaacinvoicegen.netlify.app/invoice.pdf');
             originalPdfBytes = await response.arrayBuffer();
             const pdfDoc = await PDFLib.PDFDocument.load(originalPdfBytes);
             font = await pdfDoc.embedFont(PDFLib.StandardFonts.TimesRoman);
