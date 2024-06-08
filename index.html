@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Overlay Text on PDF</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <style>
+        .item-field {
+            display: none;
+        }
+        .item-field.active {
+            display: block;
+        }
+        #pdfPreview {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Overlay Text on PDF</h1>
+        <form id="overlayForm" class="bg-light p-4 rounded shadow-sm">
+            <div class="form-group">
+                <label for="invoiceNo">Invoice No:</label>
+                <input type="text" class="form-control" id="invoiceNo" name="invoiceNo" oninput="overlayText()">
+            </div>
+            
+            <div class="form-group">
+                <label for="customerName">Customer Name:</label>
+                <input type="text" class="form-control" id="customerName" name="customerName" oninput="overlayText()">
+            </div>
+            
+            <div class="form-group">
+                <label for="itemCount">Number of Items:</label>
+                <input type="number" class="form-control" id="itemCount" name="itemCount" min="1" max="11" value="1" onchange="generateItemFields()">
+            </div>
+
+            <div id="itemFields"></div>
+            
+            <div class="form-group">
+                <label for="totalAmount">Total Amount:</label>
+                <input type="text" class="form-control" id="totalAmount" name="totalAmount" readonly>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <button type="button" class="btn btn-secondary" onclick="prevItem()">Back</button>
+                <button type="button" class="btn btn-primary" onclick="nextItem()">Next</button>
+            </div>
+            
+            <div class="text-center mt-3">
+                <button type="button" class="btn btn-success" onclick="downloadPDF()">Download PDF</button>
+            </div>
+        </form>
+        
+        <br>
+        <div class="text-center">
+            <iframe id="pdfPreview" width="100%" height="500"></iframe>
+        </div>
+    </div>
+
+    <script>
+        let originalPdfBytes = null;
+        let overlayTimeout = null;
+        let font = null;
+        const pdfPreview = document.getElementById('pdfPreview');
+        let url = '';
+        let currentItemIndex = 0;
+
+        document.addEventListener('DOMContentLoaded', loadPDF);
+
+        async function loadPDF() {
+            const response = await fetch('invoice.pdf');
+            originalPdfBytes = await response.arrayBuffer();
+            const pdfDoc = await PDFLib.PDFDocument.load(originalPdfBytes);
+            font = await pdfDoc.embedFont(PDFLib.StandardFonts.TimesRoman);
+            overlayText();
+        }
+
+        function generateItemFields() {
+            const itemCount = document.getElementById('itemCount').value;
+            const itemFieldsContainer = document.getElementById('itemFields');
+            itemFieldsContainer.innerHTML = '';
+            
+            for (let i = 1; i <= itemCount; i++) {
+                const itemFieldHTML = `
+                    <div class="item-field" id="itemField${i}">
+                        <div class="form-group">
+                            <label for="itemQty${i}">Item ${i} Qty:</label>
+                            <input type="text" class="form-control" id="itemQty${i}" name="itemQty${i}" oninput="overlayText()">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="itemDetails${i}">Item ${i} Details:</label>
+                            <input type="text" class="form-control" id="itemDetails${i}" name="itemDetails${i}" oninput="overlayText()">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="itemAmount${i}">Item ${i} Amount:</label>
+                            <input type="text" class="form-control" id="itemAmount${i}" name="itemAmount${i}" oninput="overlayText()">
+                        </div>
+                    </div>
+                `;
+                itemFieldsContainer.insertAdjacentHTML('beforeend', itemFieldHTML);
+            }
+            showItemField(currentItemIndex);
+        }
+
+        function showItemField(index) {
+            const itemFields = document.querySelectorAll('.item-field');
+            itemFields.forEach((field, i) => {
+                if (i === index) {
+                    field.classList.add('active');
+                } else {
+                    field.classList.remove('active');
+                }
+            });
+        }
+
+        function nextItem() {
+            const itemCount = document.getElementById('itemCount').value;
+            if (currentItemIndex < itemCount - 1) {
+                currentItemIndex++;
+                showItemField(currentItemIndex);
+            }
+        }
+
+        function prevItem() {
+            if (currentItemIndex > 0) {
+                currentItemIndex--;
+                showItemField(currentItemIndex);
+            }
+        }
+
+        async function overlayText() {
+            if (!originalPdfBytes) {
+                return;
+            }
+
+            if (overlayTimeout) {
+                clearTimeout(overlayTimeout);
+            }
+
+            overlayTimeout = setTimeout(async () => {
+                const form = document.getElementById('overlayForm');
+                const invoiceNo = form.invoiceNo.value;
+                const customerName = form.customerName.value;
+                const itemCount = form.itemCount.value;
+                
+                let totalAmount = 0;
+                let items = [];
+
+                for (let i = 1; i <= itemCount; i++) {
+                    const itemQty = form[`itemQty${i}`].value;
+                    const itemDetails = form[`itemDetails${i}`].value;
+                    const itemAmount = form[`itemAmount${i}`].value;
+                    const itemTotal = itemQty && itemAmount ? (itemQty * itemAmount) : 0;
+                    totalAmount += itemTotal;
+
+                    items.push({ itemQty, itemDetails, itemAmount });
+                }
+
+                form.totalAmount.value = totalAmount;
+                const totalAmountInWords = numberToWords(totalAmount) + " shillings";
+
+                const pdfDoc = await PDFLib.PDFDocument.load(originalPdfBytes);
+                const page = pdfDoc.getPage(0);
+                const { width, height } = page.getSize();
+
+                const fontSize = 16.5;
+                const textOptions = {
+                    size: fontSize,
+                    font: font,
+                    color: PDFLib.rgb(0, 0, 0)
+                };
+                const redTextOptions = {
+                    size: fontSize,
+                    font: font,
+                    color: PDFLib.rgb(1, 0, 0)
+                };
+
+                const mmToPoints = mm => mm * 2.83465;
+
+                // Draw the text at the specified positions
+                page.drawText(customerName, { ...redTextOptions, x: mmToPoints(26.345), y: height - mmToPoints(66.366) });
+                page.drawText(invoiceNo, { ...redTextOptions, x: mmToPoints(150.043), y: height - mmToPoints(73.462) });
+
+                let itemStartY = 107.625;
+
+                items.forEach((item, index) => {
+                    const yOffset = mmToPoints(11.684 * index); // Increase Y axis by 4mm for each item
+                    page.drawText(item.itemQty, { ...textOptions, x: mmToPoints(18.598), y: height - mmToPoints(itemStartY) - yOffset });
+                    page.drawText(item.itemDetails, { ...textOptions, x: mmToPoints(36.506), y: height - mmToPoints(itemStartY + 1.228) - yOffset });
+                    page.drawText(item.itemAmount, { ...textOptions, x: mmToPoints(157.921), y: height - mmToPoints(itemStartY + 1.2) - yOffset });
+                });
+
+                page.drawText(totalAmount.toString(), { ...textOptions, x: mmToPoints(158.171), y: height - mmToPoints(248.595) });
+                page.drawText(totalAmountInWords, { ...textOptions, x: mmToPoints(15.677), y: height - mmToPoints(268.45) });
+
+                const pdfBytes = await pdfDoc.save();
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+
+                if (url) {
+                    URL.revokeObjectURL(url);
+                }
+                url = URL.createObjectURL(blob);
+                pdfPreview.src = url;
+            }, 500); // Delay for half a second to debounce multiple inputs
+        }
+
+        async function downloadPDF() {
+            if (!originalPdfBytes) {
+                alert("Please upload and edit a PDF first.");
+                return;
+            }
+
+            const pdfDoc = await PDFLib.PDFDocument.load(originalPdfBytes);
+            const pdfBytes = await pdfDoc.save();
+            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'modified.pdf';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function numberToWords(num) {
+            const ones = ['','one','two','three','four','five','six','seven','eight','nine'];
+            const teens = ['eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'];
+            const tens = ['','ten','twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'];
+            const thousands = ['','thousand','million','billion'];
+
+            if (num === '0') return 'zero';
+            if (num === '') return '';
+
+            let words = '';
+            num = num.toString();
+
+            function getChunk(num, chunkSize) {
+                let chunkArray = [];
+                for (let i = num.length; i > 0; i -= chunkSize) {
+                    chunkArray.unshift(num.substring(Math.max(0, i - chunkSize), i));
+                }
+                return chunkArray;
+            }
+
+            function chunkToWords(chunk) {
+                let chunkWords = '';
+                if (chunk.length === 3) {
+                    if (chunk[0] !== '0') {
+                        chunkWords += ones[chunk[0]] + ' hundred ';
+                    }
+                    chunk = chunk.substring(1);
+                }
+                if (chunk.length === 2) {
+                    if (chunk[0] === '1' && chunk[1] !== '0') {
+                        return chunkWords + teens[chunk[1] - 1] + ' ';
+                    } else {
+                        chunkWords += tens[chunk[0]] + ' ';
+                        chunk = chunk.substring(1);
+                    }
+                }
+                if (chunk.length === 1) {
+                    chunkWords += ones[chunk] + ' ';
+                }
+                return chunkWords;
+            }
+
+            let chunks = getChunk(num, 3);
+            for (let i = 0; i < chunks.length; i++) {
+                if (chunks[i] !== '000') {
+                    words += chunkToWords(chunks[i]) + thousands[chunks.length - 1 - i] + ' ';
+                }
+            }
+            return words.trim();
+        }
+
+        generateItemFields();
+    </script>
+</body>
+</html>
