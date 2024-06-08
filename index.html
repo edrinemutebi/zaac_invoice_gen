@@ -161,6 +161,85 @@
             }
         }
 
+
+        // async function overlayText() {
+        //     if (!originalPdfBytes) {
+        //         return;
+        //     }
+
+        //     if (overlayTimeout) {
+        //         clearTimeout(overlayTimeout);
+        //     }
+
+        //     overlayTimeout = setTimeout(async () => {
+        //         const form = document.getElementById('invoiceDetailsForm');
+        //         const invoiceNo = document.getElementById('invoiceNo').value;
+        //         const customerName = document.getElementById('customerName').value;
+        //         const itemCount = form.itemCount.value;
+                
+        //         let totalAmount = 0;
+        //         let items = [];
+
+        //         for (let i = 1; i <= itemCount; i++) {
+        //             const itemQty = form[`itemQty${i}`].value;
+        //             const itemDetails = form
+        //             [`itemDetails${i}`].value;
+        //             const itemAmount = form[`itemAmount${i}`].value;
+        //             const itemTotal = itemQty && itemAmount ? (itemQty * itemAmount) : 0;
+        //             totalAmount += itemTotal;
+
+        //             items.push({ itemQty, itemDetails, itemAmount });
+        //         }
+
+        //         form.totalAmount.value = totalAmount;
+        //         const totalAmountInWords = numberToWords(totalAmount) + " shillings";
+
+        //         const pdfDoc = await PDFLib.PDFDocument.load(originalPdfBytes);
+        //         const page = pdfDoc.getPage(0);
+        //         const { width, height } = page.getSize();
+
+        //         const fontSize = 16.5;
+        //         const textOptions = {
+        //             size: fontSize,
+        //             font: font,
+        //             color: PDFLib.rgb(0, 0, 0)
+        //         };
+        //         const redTextOptions = {
+        //             size: fontSize,
+        //             font: font,
+        //             color: PDFLib.rgb(1, 0, 0)
+        //         };
+
+        //         const mmToPoints = mm => mm * 2.83465;
+
+        //         // Draw the text at the specified positions
+        //         page.drawText(customerName, { ...redTextOptions, x: mmToPoints(26.345), y: height - mmToPoints(66.000) });
+        //         page.drawText(invoiceNo, { ...redTextOptions, x: mmToPoints(150.043), y: height - mmToPoints(68.462) });
+
+        //         let itemStartY = 107.625;
+
+        //         items.forEach((item, index) => {
+        //             const yOffset = mmToPoints(11.684 * index); // Increase Y axis by 4mm for each item
+        //             page.drawText(item.itemQty, { ...textOptions, x: mmToPoints(18.598), y: height - mmToPoints(itemStartY) - yOffset });
+        //             page.drawText(item.itemDetails, { ...textOptions, x: mmToPoints(36.506), y: height - mmToPoints(itemStartY + 1.228) - yOffset });
+        //             page.drawText(item.itemAmount, { ...textOptions, x: mmToPoints(157.921), y: height - mmToPoints(itemStartY + 1.2) - yOffset });
+        //         });
+
+        //         page.drawText(totalAmount.toString(), { ...textOptions, x: mmToPoints(158.171), y: height - mmToPoints(248.595) });
+        //         page.drawText(totalAmountInWords, { ...textOptions, x: mmToPoints(15.677), y: height - mmToPoints(268.45) });
+
+        //         const pdfBytes = await pdfDoc.save();
+        //         const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+
+        //         if (url) {
+        //             URL.revokeObjectURL(url);
+        //         }
+        //         url = URL.createObjectURL(blob);
+        //         pdfPreview.src = url;
+        //     }, 500); // Delay for half a second to debounce multiple inputs
+        // }
+
+
         async function overlayText() {
             if (!originalPdfBytes) {
                 return;
@@ -175,14 +254,13 @@
                 const invoiceNo = document.getElementById('invoiceNo').value;
                 const customerName = document.getElementById('customerName').value;
                 const itemCount = form.itemCount.value;
-                
+
                 let totalAmount = 0;
                 let items = [];
 
                 for (let i = 1; i <= itemCount; i++) {
                     const itemQty = form[`itemQty${i}`].value;
-                    const itemDetails = form
-                    [`itemDetails${i}`].value;
+                    const itemDetails = form[`itemDetails${i}`].value;
                     const itemAmount = form[`itemAmount${i}`].value;
                     const itemTotal = itemQty && itemAmount ? (itemQty * itemAmount) : 0;
                     totalAmount += itemTotal;
@@ -227,6 +305,11 @@
                 page.drawText(totalAmount.toString(), { ...textOptions, x: mmToPoints(158.171), y: height - mmToPoints(248.595) });
                 page.drawText(totalAmountInWords, { ...textOptions, x: mmToPoints(15.677), y: height - mmToPoints(268.45) });
 
+                // Add current date
+                const now = new Date();
+                const dateStr = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
+                page.drawText(dateStr, { ...textOptions, x: mmToPoints(143.947), y: height - mmToPoints(84.448) });
+
                 const pdfBytes = await pdfDoc.save();
                 const blob = new Blob([pdfBytes], { type: 'application/pdf' });
 
@@ -237,6 +320,8 @@
                 pdfPreview.src = url;
             }, 500); // Delay for half a second to debounce multiple inputs
         }
+
+
     </script>
     <script src="downloadPDF.js"></script> <!-- Include the downloadPDF.js file -->
     <script src="numberToWords.js"></script> 
