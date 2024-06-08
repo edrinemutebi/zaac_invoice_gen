@@ -6,8 +6,6 @@
     <title>Overlay Text on PDF</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.13.279/pdf.min.js"></script>
-
     <style>
         .item-field {
             display: none;
@@ -60,7 +58,7 @@
         <br>
         <div class="text-center">
             <iframe id="pdfPreview" width="100%" height="500"></iframe>
-        </div> 
+        </div>    
     </div>
 
     <script>
@@ -208,7 +206,7 @@
                     URL.revokeObjectURL(url);
                 }
                 url = URL.createObjectURL(blob);
-                pdfPreview.src = url
+                pdfPreview.src = url;
             }, 500); // Delay for half a second to debounce multiple inputs
         }
 
