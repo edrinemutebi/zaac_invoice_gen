@@ -21,7 +21,7 @@
 </head>
 <body>
     <div class="container mt-5">
-        <h1 class="text-center mb-4">Zaac Invoice</h1>
+        <h1 class="text-center mb-4">Overlay Text on PDF</h1>
         <form id="overlayForm" class="bg-light p-4 rounded shadow-sm">
             <div class="form-group">
                 <label for="invoiceNo">Invoice No:</label>
@@ -56,12 +56,12 @@
         </form>
         
         <br>
+        <!-- <div class="text-center">
+            <iframe id="pdfPreview" width="100%" height="500"></iframe>
+        </div> -->
         <div class="text-center">
-            <object id="pdfPreview" type="application/pdf" width="100%" height="500"></object>
-            <iframe src="https://docs.google.com/viewer?url=https://zaacinvoicegen.netlify.app/invoice.pdf&embedded=true" style="width:100%; height:650px;" frameborder="0"></iframe>
+            <iframe id="pdfPreview" src="https://docs.google.com/viewer?embedded=true" style="width:100%; height:650px;" frameborder="0"></iframe>
         </div>
-
-
      
     </div>
 
@@ -210,7 +210,7 @@
                     URL.revokeObjectURL(url);
                 }
                 url = URL.createObjectURL(blob);
-                pdfPreview.data = url;
+                pdfPreview.src = url;
             }, 500); // Delay for half a second to debounce multiple inputs
         }
 
