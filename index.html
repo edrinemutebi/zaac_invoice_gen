@@ -270,7 +270,7 @@
                 }
 
                 form.totalAmount.value = totalAmount;
-                const totalAmountInWords = numberToWords(totalAmount) + " shillings";
+                const totalAmountInWords = numberToWords(totalAmount) + " Shillings";
 
                 const pdfDoc = await PDFLib.PDFDocument.load(originalPdfBytes);
                 const page = pdfDoc.getPage(0);

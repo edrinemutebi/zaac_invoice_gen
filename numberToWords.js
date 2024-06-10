@@ -22,7 +22,7 @@ function numberToWords(num) {
         let chunkWords = '';
         if (chunk.length === 3) {
             if (chunk[0] !== '0') {
-                chunkWords += ones[chunk[0]] + ' hundred ';
+                chunkWords += ones[chunk[0]] + ' Hundred ';
             }
             chunk = chunk.substring(1);
         }
