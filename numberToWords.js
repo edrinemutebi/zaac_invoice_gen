@@ -1,8 +1,8 @@
 function numberToWords(num) {
-    const ones = ['','one','two','three','four','five','six','seven','eight','nine'];
-    const teens = ['eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'];
-    const tens = ['','ten','twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'];
-    const thousands = ['','thousand','million','billion'];
+    const ones = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine'];
+    const teens = ['Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+    const tens = ['','Ten','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+    const thousands = ['','Thousand','Million','Billion'];
 
     if (num === '0') return 'zero';
     if (num === '') return '';
